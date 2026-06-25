@@ -18,10 +18,17 @@ type SubscriptionRepo interface {
 type SubscriptionGetOpt func(*SubscriptionGetConfig)
 
 type SubscriptionGetConfig struct {
+	SubID       *string
 	UserID      *string
 	ServiceName *string
 	StartPeriod *time.Time
 	EndPeriod   *time.Time
+}
+
+func WithSubscriptionID(subID string) SubscriptionGetOpt {
+	return func(cfg *SubscriptionGetConfig) {
+		cfg.SubID = &subID
+	}
 }
 
 func WithUserID(userID string) SubscriptionGetOpt {
