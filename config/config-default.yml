@@ -1,3 +1,6 @@
+server:
+  addr: "localhost:11111"
+
 postgres-database:
   scheme: "postgres"
   host: "localhost"

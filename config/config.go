@@ -5,16 +5,23 @@ import (
 	"net/url"
 	"time"
 
+	"em"
+
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
 	Logger   LoggerConfig   `yaml:"logger"`
+	Server   ServerConfig   `yaml:"server"`
 	Postgres PostgresConfig `yaml:"postgres-database"`
 }
 
 type LoggerConfig struct {
 	Development bool `yaml:"development" env:"LOGGER_DEV"`
+}
+
+type ServerConfig struct {
+	Addr string `yaml:"addr" env:"SERVER_ADDR"`
 }
 
 type PostgresConfig struct {
@@ -54,8 +61,20 @@ func (p PostgresConfig) DSN() string {
 func LoadConfig(path string) (*Config, error) {
 	var cfg Config
 
-	if err := cleanenv.ReadConfig(path, &cfg); err != nil {
-		return nil, fmt.Errorf("load config: %w", err)
+	f, err := em.ConfigFS.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("load config: open embedded file: %w", err)
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	if err := cleanenv.ParseYAML(f, &cfg); err != nil {
+		return nil, fmt.Errorf("load config: parse yaml: %w", err)
+	}
+
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		return nil, fmt.Errorf("load config: read env: %w", err)
 	}
 
 	return &cfg, nil

@@ -1,11 +1,11 @@
-package main
+package logger
 
 import (
 	"em/config"
 	"go.uber.org/zap"
 )
 
-func NewLogger(cfg *config.Config) *zap.Logger {
+func New(cfg *config.Config) *zap.Logger {
 	var logger *zap.Logger
 	if cfg.Logger.Development {
 		logger = zap.Must(zap.NewDevelopment())

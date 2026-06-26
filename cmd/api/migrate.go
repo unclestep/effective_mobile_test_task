@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
-func Migrate(dsn string) error {
-	src, err := iofs.New(em.MigrationsFS, "file://migrations")
+func Migrate(dsn string) (migrateErr error) {
+	src, err := iofs.New(em.MigrationsFS, "migrations")
 	if err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}
@@ -21,6 +21,7 @@ func Migrate(dsn string) error {
 	}
 	defer func() {
 		if srcErr, dbErr := m.Close(); srcErr != nil || dbErr != nil {
+			migrateErr = fmt.Errorf("migrate: srcErr %w, dbErr %w", srcErr, dbErr)
 		}
 	}()
 
