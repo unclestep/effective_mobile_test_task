@@ -3,8 +3,8 @@ CREATE TABLE subscriptions(
     service_name TEXT NOT NULL,
     price INT NOT NULL CHECK (price > 0),
     user_id UUID UNIQUE NOT NULL,
-    start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP,
+    start_date DATE NOT NULL,
+    end_date DATE,
     CHECK (end_date IS NULL OR end_date >= start_date)
 );
 

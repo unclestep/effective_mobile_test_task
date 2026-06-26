@@ -48,13 +48,13 @@ func (r *pgRepo) makeParams(f *subscription.SubscriptionFilter) (string, []any) 
 		fmt.Fprintf(&sb, " AND service_name = $%d", len(args))
 	}
 	// Selects subscriptions, ending after the given date (including)
-	if f.StartDate != nil {
-		args = append(args, *f.StartDate)
+	if f.PeriodFrom != nil {
+		args = append(args, *f.PeriodFrom)
 		fmt.Fprintf(&sb, " AND (end_date IS NULL OR end_date >= $%d)", len(args))
 	}
 	// Selects subscriptions, starting before the given date (including)
-	if f.EndDate != nil {
-		args = append(args, *f.EndDate)
+	if f.PeriodTo != nil {
+		args = append(args, *f.PeriodTo)
 		fmt.Fprintf(&sb, " AND start_date <= $%d", len(args))
 	}
 

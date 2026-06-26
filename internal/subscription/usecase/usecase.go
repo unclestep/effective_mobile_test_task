@@ -12,6 +12,7 @@ import (
 
 const (
 	getMethod          = "get"
+	getByIDMethod      = "get by id"
 	getTotalCostMethod = "get total cost"
 	createMethod       = "create"
 	updateMethod       = "update"
@@ -39,6 +40,19 @@ func (u *SubscriptionUC) Get(ctx context.Context, filter *subscription.Subscript
 	return subs, nil
 }
 
+func (u *SubscriptionUC) GetByID(ctx context.Context, subID string) (*subscription.Subscription, error) {
+	subs, err := u.repo.Get(ctx, &subscription.SubscriptionFilter{SubID: &subID})
+	if err != nil {
+		u.logger.Error("failed to get subscription by id", zap.String("subscription_id", subID), zap.Error(err))
+		return nil, wrap(getByIDMethod, err)
+	}
+	if len(subs) == 0 {
+		u.logger.Warn("subscription not found", zap.String("subscription_id", subID))
+		return nil, wrap(getByIDMethod, subscription.ErrNotFound)
+	}
+	return subs[0], nil
+}
+
 func (u *SubscriptionUC) GetTotalCost(ctx context.Context, filter *subscription.SubscriptionFilter) (int, error) {
 	subs, err := u.repo.Get(ctx, filter)
 	if err != nil {
@@ -53,17 +67,17 @@ func (u *SubscriptionUC) GetTotalCost(ctx context.Context, filter *subscription.
 	return total, nil
 }
 
-func (u *SubscriptionUC) Create(ctx context.Context, subInp *subscription.CreateSubInput) error {
+func (u *SubscriptionUC) Create(ctx context.Context, subInp *subscription.CreateSubInput) (*subscription.Subscription, error) {
 	sub := subscription.NewSubscription(
 		uuid.NewString(), subInp.ServiceName, subInp.Price, subInp.UserID, subInp.StartDate, subInp.EndDate,
 	)
 	if err := u.repo.Create(ctx, sub); err != nil {
 		u.logger.Error("failed to create a new subscription", zap.Any("subscription_input", subInp), zap.Error(err))
-		return wrap(createMethod, err)
+		return nil, wrap(createMethod, err)
 	}
 
 	u.logger.Info("subscription created", zap.Any("subscription_data", sub))
-	return nil
+	return sub, nil
 }
 
 func (u *SubscriptionUC) Update(ctx context.Context, subID string, subInp *subscription.UpdateSubInput) error {
