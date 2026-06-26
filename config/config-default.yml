@@ -2,13 +2,19 @@ server:
   addr: "localhost:11111"
 
 postgres-database:
-  scheme: "postgres"
   host: "localhost"
   port: 5432
   user: "postgres"
   password: "postgres"
   name: "db"
   ssl_mode: "disable"
+  max_conns: 10
+  min_conns: 2
+  max_conn_lifetime: 1h
+  max_conn_idle_time: 30m
+  health_check_period: 1m
+  connect_timeout: 5s
+  pool_init_timeout: 15s
 
 logger:
   development: true

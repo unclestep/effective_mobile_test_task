@@ -7,6 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
@@ -21,10 +23,15 @@ import (
 
 func NewApp(cfg *config.Config) *fx.App {
 	return fx.New(
-		fx.Supply(cfg.Postgres, cfg.Server, cfg.Logger),
+		createContext(),
+		fx.Supply(&cfg.Postgres, &cfg.Server, &cfg.Logger),
 		fx.Provide(
 			logger.New,
-			postgres.NewPool,
+			fx.Annotate(
+				postgres.NewPool,
+				fx.As(new(postgres.DBTX)),
+				fx.As(fx.Self()),
+			),
 			repo.NewPgRepo,
 			usecase.NewSubscriptionUC,
 			subhttp.NewHandler,
@@ -38,6 +45,21 @@ func NewApp(cfg *config.Config) *fx.App {
 	)
 }
 
+func createContext() fx.Option {
+	return fx.Provide(func(lc fx.Lifecycle) context.Context {
+		ctx, cancel := context.WithCancel(context.Background())
+
+		lc.Append(fx.Hook{
+			OnStop: func(stopCtx context.Context) error {
+				cancel()
+				return nil
+			},
+		})
+
+		return ctx
+	})
+}
+
 func registerPoolLifecycle(lc fx.Lifecycle, pool *pgxpool.Pool, logger *zap.Logger) {
 	lc.Append(fx.Hook{
 		OnStop: func(context.Context) error {
@@ -49,6 +71,18 @@ func registerPoolLifecycle(lc fx.Lifecycle, pool *pgxpool.Pool, logger *zap.Logg
 }
 
 func registerRoutes(router *gin.Engine, handler *subhttp.Handler) {
+	swaggerHandler := ginSwagger.WrapHandler(swaggerfiles.Handler)
+	router.GET("/swagger/*any", func(c *gin.Context) {
+		if any := c.Param("any"); any == "/" || any == "" {
+			c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+			return
+		}
+		swaggerHandler(c)
+	})
+	router.GET("/swagger", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
+
 	api := router.Group("/api/v1")
 	subhttp.RegisterRoutes(api, handler)
 }

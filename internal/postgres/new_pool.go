@@ -24,12 +24,12 @@ func NewPool(parent context.Context, cfg *config.PostgresConfig, logger *zap.Log
 
 	pgCfg.MaxConns = cfg.MaxConns
 	pgCfg.MinConns = cfg.MinConns
-	pgCfg.MaxConnLifetime = cfg.MaxConnLifetime
-	pgCfg.MaxConnIdleTime = cfg.MaxConnIdleTime
-	pgCfg.HealthCheckPeriod = cfg.HealthCheckPeriod
-	pgCfg.ConnConfig.ConnectTimeout = cfg.ConnectTimeout
+	pgCfg.MaxConnLifetime = cfg.MaxConnLifetime.Duration()
+	pgCfg.MaxConnIdleTime = cfg.MaxConnIdleTime.Duration()
+	pgCfg.HealthCheckPeriod = cfg.HealthCheckPeriod.Duration()
+	pgCfg.ConnConfig.ConnectTimeout = cfg.ConnectTimeout.Duration()
 
-	ctx, cancel := context.WithTimeout(parent, cfg.PoolInitTimeout)
+	ctx, cancel := context.WithTimeout(parent, cfg.PoolInitTimeout.Duration())
 	defer cancel()
 
 	pool, err := pgxpool.NewWithConfig(ctx, pgCfg)

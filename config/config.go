@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"net/url"
-	"time"
 
 	"em"
 
@@ -32,13 +31,13 @@ type PostgresConfig struct {
 	DBName   string `yaml:"name" env:"POSTGRES_DB"`
 	SSLMode  string `yaml:"ssl_mode" env:"POSTGRES_SSL"`
 
-	MaxConns          int32         `yaml:"max_conns" env:"POSTGRES_MAX_CONNS"`
-	MinConns          int32         `yaml:"min_conns" env:"POSTGRES_MIN_CONNS"`
-	MaxConnLifetime   time.Duration `yaml:"max_conn_lifetime" env:"POSTGRES_MAX_CONN_LIFETIME"`
-	MaxConnIdleTime   time.Duration `yaml:"max_conn_idle_time" env:"POSTGRES_MAX_CONN_IDLE_TIME"`
-	HealthCheckPeriod time.Duration `yaml:"health_check_period" env:"POSTGRES_HEALTH_CHECK_PERIOD"`
-	ConnectTimeout    time.Duration `yaml:"connect_timeout" env:"POSTGRES_CONNECT_TIMEOUT"`
-	PoolInitTimeout   time.Duration `yaml:"pool_init_timeout" env:"POSTGRES_POOL_INIT_TIMEOUT"`
+	MaxConns          int32    `yaml:"max_conns" env:"POSTGRES_MAX_CONNS"`
+	MinConns          int32    `yaml:"min_conns" env:"POSTGRES_MIN_CONNS"`
+	MaxConnLifetime   Duration `yaml:"max_conn_lifetime" env:"POSTGRES_MAX_CONN_LIFETIME"`
+	MaxConnIdleTime   Duration `yaml:"max_conn_idle_time" env:"POSTGRES_MAX_CONN_IDLE_TIME"`
+	HealthCheckPeriod Duration `yaml:"health_check_period" env:"POSTGRES_HEALTH_CHECK_PERIOD"`
+	ConnectTimeout    Duration `yaml:"connect_timeout" env:"POSTGRES_CONNECT_TIMEOUT"`
+	PoolInitTimeout   Duration `yaml:"pool_init_timeout" env:"POSTGRES_POOL_INIT_TIMEOUT"`
 }
 
 func (p PostgresConfig) DSN() string {

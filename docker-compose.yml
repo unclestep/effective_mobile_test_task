@@ -1,0 +1,29 @@
+services:
+  sub-server:
+    build: .
+    container_name: sub-server
+    environment:
+      - SERVER_ADDR=[::]:11111
+      - POSTGRES_HOST=sub-postgres
+    ports:
+      - 11111:11111
+    env_file: ".env"
+    depends_on:
+      sub-postgres:
+        condition: service_healthy
+
+  sub-postgres:
+    image: "postgres:18.3-alpine"
+    container_name: sub-postgres
+    env_file: ".env"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - sub-volume:/var/lib/postgresql
+
+volumes:
+  sub-volume:
