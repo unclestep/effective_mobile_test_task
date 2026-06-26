@@ -1,0 +1,11 @@
+postgres-database:
+  scheme: "postgres"
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+  name: "db"
+  ssl_mode: "disable"
+
+logger:
+  development: true
