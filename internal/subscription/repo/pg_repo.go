@@ -6,74 +6,63 @@ import (
 	"strings"
 	"time"
 
+	"em/internal/postgres"
 	"em/internal/subscription"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 )
-
-type dbtx interface {
-	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
-	Query(ctx context.Context, sql string, arguments ...any) (pgx.Rows, error)
-	QueryRow(ctx context.Context, sql string, arguments ...any) pgx.Row
-}
 
 const (
 	queryTimeout = 15 * time.Second
 )
 
 type pgRepo struct {
-	dbtx dbtx
+	dbtx postgres.DBTX
 }
 
-func NewPgRepo(dbtx dbtx) subscription.SubscriptionRepo {
+func NewPgRepo(dbtx postgres.DBTX) subscription.SubscriptionRepo {
 	return &pgRepo{
 		dbtx: dbtx,
 	}
 }
 
-func (r *pgRepo) makeParams(opts ...subscription.SubscriptionGetOpt) (string, []any) {
-	var cfg subscription.SubscriptionGetConfig
-	for _, opt := range opts {
-		opt(&cfg)
+func (r *pgRepo) makeParams(f *subscription.SubscriptionFilter) (string, []any) {
+	if f == nil {
+		return "", nil
 	}
 
 	var sb strings.Builder
 	sb.Grow(128)
 	var args []any
 
-	if cfg.SubID != nil {
-		args = append(args, *cfg.SubID)
+	if f.SubID != nil {
+		args = append(args, *f.SubID)
 		fmt.Fprintf(&sb, " AND subscription_id = $%d", len(args))
 	}
-
-	if cfg.UserID != nil {
-		args = append(args, *cfg.UserID)
+	if f.UserID != nil {
+		args = append(args, *f.UserID)
 		fmt.Fprintf(&sb, " AND user_id = $%d", len(args))
 	}
-
-	if cfg.ServiceName != nil {
-		args = append(args, *cfg.ServiceName)
+	if f.ServiceName != nil {
+		args = append(args, *f.ServiceName)
 		fmt.Fprintf(&sb, " AND service_name = $%d", len(args))
 	}
-
 	// Selects subscriptions, ending after the given date (including)
-	if cfg.StartPeriod != nil {
-		args = append(args, *cfg.StartPeriod)
+	if f.StartDate != nil {
+		args = append(args, *f.StartDate)
 		fmt.Fprintf(&sb, " AND (end_date IS NULL OR end_date >= $%d)", len(args))
 	}
-
 	// Selects subscriptions, starting before the given date (including)
-	if cfg.EndPeriod != nil {
-		args = append(args, *cfg.EndPeriod)
+	if f.EndDate != nil {
+		args = append(args, *f.EndDate)
 		fmt.Fprintf(&sb, " AND start_date <= $%d", len(args))
 	}
 
 	return sb.String(), args
 }
 
-func (r *pgRepo) Get(parent context.Context, opts ...subscription.SubscriptionGetOpt) ([]*subscription.Subscription, error) {
-	queryParams, args := r.makeParams(opts...)
+func (r *pgRepo) Get(parent context.Context, filter *subscription.SubscriptionFilter) ([]*subscription.Subscription, error) {
+	queryParams, args := r.makeParams(filter)
 
 	query := `
 		SELECT subscription_id, service_name, price, user_id, start_date, end_date
