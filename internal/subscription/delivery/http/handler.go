@@ -54,13 +54,7 @@ func (h *Handler) Create(c *gin.Context) {
 // @Failure 404 {object} map[string]string
 // @Router /subscriptions/{id} [get]
 func (h *Handler) GetByID(c *gin.Context) {
-	id := c.Param("id")
-	if id == "summary" {
-		h.Summary(c)
-		return
-	}
-
-	sub, err := h.uc.GetByID(c.Request.Context(), id)
+	sub, err := h.uc.GetByID(c.Request.Context(), c.Param("id"))
 	if err != nil {
 		respondError(c, err)
 		return

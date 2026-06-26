@@ -86,6 +86,27 @@ func (r *pgRepo) Get(parent context.Context, filter *subscription.SubscriptionFi
 	return subscriptions, nil
 }
 
+func (r *pgRepo) GetTotalCost(parent context.Context, filter *subscription.SubscriptionFilter) (int, error) {
+	queryParams, args := r.makeParams(filter)
+
+	query := `
+		SELECT COALESCE(SUM(price), 0)
+		FROM subscriptions
+		WHERE 1=1
+	` + queryParams
+
+	ctx, cancel := context.WithTimeout(parent, queryTimeout)
+	defer cancel()
+
+	var total int
+	err := r.dbtx.QueryRow(ctx, query, args...).Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("pgRepo: get total cost: %w", err)
+	}
+
+	return total, nil
+}
+
 func (r *pgRepo) Create(parent context.Context, sub *subscription.Subscription) error {
 	query := `
 		INSERT INTO subscriptions(subscription_id, service_name, price, user_id, start_date, end_date)

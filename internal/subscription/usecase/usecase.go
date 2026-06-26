@@ -54,15 +54,10 @@ func (u *SubscriptionUC) GetByID(ctx context.Context, subID string) (*subscripti
 }
 
 func (u *SubscriptionUC) GetTotalCost(ctx context.Context, filter *subscription.SubscriptionFilter) (int, error) {
-	subs, err := u.repo.Get(ctx, filter)
+	total, err := u.repo.GetTotalCost(ctx, filter)
 	if err != nil {
 		u.logger.Error("failed to get total cost of subscriptions", zap.Any("get params", filter), zap.Error(err))
 		return 0, wrap(getTotalCostMethod, err)
-	}
-
-	var total int
-	for _, s := range subs {
-		total += s.Price
 	}
 	return total, nil
 }
